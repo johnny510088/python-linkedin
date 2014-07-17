@@ -1,16 +1,21 @@
 #!/usr/bin/env python
 from linkedin import linkedin
-application = linkedin.LinkedInApplication(token="AQWfZmj7eHDppV7llZUm2tuKhoLYIX3Jkm3lgegjt7kqGIW0DNvYkzsw9Y08XydQHTHSkJCGK-vKuQNS8DAEAwRRhjwIuWHf0jgTMle7aEw-lSP6-v6x1tm2xkqDNljcnC0QKlQWoAoyLNCXl06R9rGpBtVkVDOL8nbDFa8ZW4xvOqTtiag")
-#Get the data now!!
 
-print("------------------Get profile by id------------------")
-print("%s" % application.get_profile(member_id='tJ0koKfP1L'))
+API_KEY = '{Please input api key}'
+API_SECRET = '{Please input api secret}'
+REDIRECT_URL = '{Please input redirect url}'
 
-print("------------------Get profile by Basic selectors------------------")
-print("%s" % application.get_profile(member_id='tJ0koKfP1L',selectors=['id', 'first-name', 'last-name', 'location', 'distance', 'num-connections', 'skills', 'educations']))	
+authentication = linkedin.LinkedInAuthentication(API_KEY, API_SECRET, REDIRECT_URL,linkedin.PERMISSIONS.enums.values())
+print("Check the URL on browser and retun the \'authorization code\' \n%s"% authentication.authorization_url )
+authorizationCode = raw_input('Pleace input authorization_code:\n')
+authentication.authorization_code=authorizationCode
 
-print("------------------Get profile by network selectors------------------")
-print("%s" % application.get_profile(member_id='tJ0koKfP1L',selectors=['network']))	
+application = linkedin.LinkedInApplication(authentication)
+application = linkedin.LinkedInApplication(token=authentication.get_access_token())
 
-print("------------------Get Connections------------------")
-print("%s" % application.get_connections())
+target_member_id = '{Please input the ID}'
+print("------------------Get profile by member id------------------")
+print("%s" % application.get_profile(member_id=target_member_id))
+
+print("------------------Get profile by member id with selectors------------------")
+print("%s" %application.get_profile(member_id=target_member_id,selectors=['id', 'first-name', 'last-name', 'location', 'distance', 'num-connections']))
