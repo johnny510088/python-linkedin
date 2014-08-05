@@ -46,9 +46,8 @@ def findRecursively(target_member_id):
 			#Read the file and transfer "python object" type into "dictionary" type
 			file_content = readFile(target_member_id)
 			jsonDict = ast.literal_eval(file_content)
-#print "type(jsonDict) = ",type(jsonDict)
-#print "target member id  = " ,target_member_id
 			#Write myself profile into .csv
+			
 			#Get friends' ID and do the Recursively  
 			#(1)Get ID from <network> <updates> <values> <#> <updateContent> <person> <id>
 			IsRepeat = "FALSE"
@@ -60,16 +59,23 @@ def findRecursively(target_member_id):
 					print "-------------------------------------------"
 					for index in range(len(ID_list)):
 						if ID_list[index] == jsonDict['network']['updates']['values'][i]['updateContent']['person']['id']:
-							print "In the if "
 							IsRepeat = "TRUE"
 							break
 					if IsRepeat == "FALSE":
 						ID_list.append(jsonDict['network']['updates']['values'][i]['updateContent']['person']['id'])
 						findRecursively(jsonDict['network']['updates']['values'][i]['updateContent']['person']['id'])
-
 			#(2)Get ID from <relationToViewer> <connections> <values> <person> <id>
-			
-			
+			IsRepeat = "FALSE"
+			for i in range(jsonDict['relationToViewer']['connections']['_total']):
+				if jsonDict['relationToViewer']['connections']['values'][i]['person']['id']!="private":
+					for index in range(len(ID_list)):
+						if ID_list[index] == jsonDict['relationToViewer']['connections']['values'][i]['person']['id']:
+							IsRepeat = "TRUE"
+							break
+					if IsRepeat == "FALSE":
+						ID_list.append(jsonDict['relationToViewer']['connections']['values'][i]['person']['id'])
+						findRecursively(jsonDict['relationToViewer']['connections']['values'][i]['person']['id'])
+					
 #			print "Network count = jsonDict['network']['updates']['_count']"
 #			print "Network 0 = ",jsonDict['network']['updates']['values'][0]['updateContent']['person']['id']
 #			print "Network 1 = ",jsonDict['network']['updates']['values'][1]['updateContent']['person']['id']
@@ -85,7 +91,7 @@ def findRecursively(target_member_id):
 	return
 
 findRecursively(member_id)
-print "At the End of the program"
+print "At the End of the program, total number of ID = ",len(ID_list)
 
 
 
