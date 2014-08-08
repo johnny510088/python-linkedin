@@ -16,6 +16,7 @@ member_id='yp7a3L09d2'#Johnny Chan
 #member_id='mZY4xXt8EZ'
 #member_id='dJgVi_-eG6'
 
+#Path to store the files
 path="/home/johnny/Documents/linkedin/johnny/"
 traverseID_list = []
 allID_list = []
@@ -60,8 +61,7 @@ def traverseDictGetAllID(d,traverseID_list):
 								break
 						if IsRepeat == "FALSE":
 							traverseID_list.append(v)
-#print "{0} : {1}".format(k, v)
-	return traverseID_list
+	return traverseID_list #Return the id list after traverseID
 
 
 def findRecursively(target_member_id,allID_list):
@@ -72,7 +72,6 @@ def findRecursively(target_member_id,allID_list):
 			#Read the file and transfer "python object" type into "dictionary" type
 			file_content = readFile(target_member_id)
 			jsonDict = ast.literal_eval(file_content)
-			#Write myself profile into .csv
 			
 			#Get friends' ID and do the Recursively  
 			traverseID_list = []
@@ -90,48 +89,10 @@ def findRecursively(target_member_id,allID_list):
 						print "allIDlist[%d] = %s" % (i,allID_list[i])
 					allID_list=findRecursively(traverseID_list[index],allID_list)
 			
-				
-			#If there new ID and store into allID_list
-			"""
-			#(1)Get ID from <network> <updates> <values> <#> <updateContent> <person> <id>
-			IsRepeat = "FALSE"
-			for i in range(jsonDict['network']['updates']['_count']):
-				if jsonDict['network']['updates']['values'][i]['updateContent'].has_key('person') and jsonDict['network']['updates']['values'][i]['updateContent']['person']['id']!="private":
-					print "-------------ID_list disctionary-----------"
-					for index in range(len(ID_list)):
-						print "ID_list[%d] = %s " % (index ,ID_list[index])
-					print "-------------------------------------------"
-					for index in range(len(ID_list)):
-						if ID_list[index] == jsonDict['network']['updates']['values'][i]['updateContent']['person']['id']:
-							IsRepeat = "TRUE"
-							break
- 				if IsRepeat == "FALSE":
-						ID_list.append(jsonDict['network']['updates']['values'][i]['updateContent']['person']['id'])
-						findRecursively(jsonDict['network']['updates']['values'][i]['updateContent']['person']['id'])
-			#(2)Get ID from <relationToViewer> <connections> <values> <person> <id>
-			IsRepeat = "FALSE"
-			for i in range(jsonDict['relationToViewer']['connections']['_total']):
-				if jsonDict['relationToViewer']['connections']['values'][i]['person']['id']!="private":
-					for index in range(len(ID_list)):
-						if ID_list[index] == jsonDict['relationToViewer']['connections']['values'][i]['person']['id']:
-							IsRepeat = "TRUE"
-							break
-					if IsRepeat == "FALSE":
-						ID_list.append(jsonDict['relationToViewer']['connections']['values'][i]['person']['id'])
-						findRecursively(jsonDict['relationToViewer']['connections']['values'][i]['person']['id'])
-			"""
-
-
-#			print "Network count = jsonDict['network']['updates']['_count']"
-#			print "Network 0 = ",jsonDict['network']['updates']['values'][0]['updateContent']['person']['id']
-#			print "Network 1 = ",jsonDict['network']['updates']['values'][1]['updateContent']['person']['id']
-			
-			
-
 		except (ValueError, KeyError, TypeError) as error:
 			print "At the Inter Exception , member id = ",target_member_id
 			print "Error : ",error
-	except Exception as error: #Don't do any thing here
+	except Exception as error:
 		print "At the Outer Exception , member id = ",target_member_id
 		print "Error :",error
 	return allID_list
@@ -155,14 +116,3 @@ for index in range(len(traverseID_list)):
 		allID_list=findRecursively(traverseID_list[index],allID_list)
 
 print "At the End of the program, total number of ID = ",len(allID_list)
-
-
-
-
-
-#print("------------------Get profile by Basic selectors------------------")
-#print("%s" % application.get_profile(member_id=target_member_id,selectors=['id', 'first-name', 'last-name', 'location', 'distance', 'num-connections', 'skills', 'educations']))	
-#print("------------------Get profile by All selectors------------------")
-#print("%s" % application.get_profile(member_id=target_member_id,selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer','connections','picture-url','picture-urls','positions','educations','member-url-resources','api-standard-profile-request','site-standard-profile-request','person-activities','recommendations-given','recommendations-received','network','twitter-accounts','im-accounts','phone-numbers','date-of-birth','main-address','location','industry','industry-id','distance','num-recommenders','current-status-timestamp','last-modified-timestamp','num-connections','summary','specialties','proposal-comments','interests','associations','honors','publications','patents','languages','skills','certifications','honors-awards','test-scores','volunteer','organizations-memberships','courses','projects','api-public-profile-request','site-public-profile-request','public-profile-url','three-current-positions','three-past-positions','bound-account-types','suggestions','primary-twitter-account','mfeed-rss-url','following','group-memberships','job-bookmarks']))
-#writeFileWithCheck(target_member_id, str(application.get_profile(member_id=target_member_id,selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer'])))
-
