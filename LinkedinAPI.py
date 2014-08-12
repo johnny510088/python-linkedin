@@ -19,8 +19,8 @@ member_id='yp7a3L09d2'#Johnny Chan
 #Path to store the files
 path="/home/johnny/Documents/linkedin/johnny/"
 #Global Three Main Variable
-allID_list = []
-afterProgressID_list = []
+allID_list = [member_id]
+afterProgressID_list = [member_id]
 allID_dict = dict()
 #Tmp Variable
 traverseID_list = []
@@ -56,11 +56,11 @@ def printDict(d, indent):
 
 def printDictToFile(d, indent,f):
 	for key, value in d.iteritems():
-		f.write('\t' * indent + str(key))
+		f.write('\t' * indent + str(key)+'\n')
 		if isinstance(value, dict):
-			printDictToFile(value, indent+1)
+			printDictToFile(value, indent+1,f)
 		else:
-			f.write( '\t' * (indent+1) + str(value))
+			f.write( '\t' * (indent+1) + str(value)+'\n')
 
 #Traverse the whole Dictionary and get the value's whose key is equal to "id"
 def traverseDictGetAllID(d,traverseID_list):
@@ -84,7 +84,7 @@ def traverseDictGetAllID(d,traverseID_list):
 							traverseID_list.append(v)
 	return traverseID_list #Return the id list after traverseID
 
-#Remove the ID which have already in the allID_list
+#Remove the traverseID_list which have already in the allID_list
 def removeRedundantID(traverseID_list,allID_list):
 	tmp_list=[]
 	for index in range(len(traverseID_list)):
@@ -98,13 +98,13 @@ def removeRedundantID(traverseID_list,allID_list):
 #Return the path(type = list) of specific "key" from the dictionary 
 def findKeyPath(d,key):
 	for k,v in d.items():
-		if isinstance(v,type(None)):
-			if k == key:
-				return [k]
-		else:
+		if isinstance(v,dict):
 			p = findKeyPath(v,key)
 			if p:
 				return [k] + p
+		else:
+			if k == key:
+				return [k]
 
 #Set the Value in the Dictionary by mapList
 def setInDict(dataDict, mapList, value):
@@ -114,10 +114,15 @@ def setInDict(dataDict, mapList, value):
 def getFromDict(dataDict, mapList):
 	return reduce(lambda d, k: d[k], mapList, dataDict)
 
+#Search the specefic ID in allID_list and return the next ID after the current specific ID 
+def getNextID(target_member_id,allID_list):
+	for index in range(len(allID_list)):
+		if target_member_id == allID_list[index]:
+			return allID_list[index+1]
 
 #Main Recursively function
 def findRecursively( target_member_id , afterProgressID_list , allID_list , allID_dict , count):
-	print "[TEST CODE]In findRecursively funx , target_member_id = ",target_member_id
+	print "[TEST CODE]In findRecursively funx , target_member_id = %s ,count = %d " % (target_member_id,count)
 	count = count -1
 	afterProgressID_list.append(target_member_id)# Add "target member id" in orders
 	try:
@@ -131,42 +136,53 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , allI
 			traverseID_list = []
 			traverseID_list = traverseDictGetAllID(jsonDict,traverseID_list)#Get "New ID list" from the current "target member ID"
 			traverseID_list = removeRedundantID(traverseID_list,allID_list)#Remove the IDs which have already been progressed
-		
+			
 			IDPathInDict = findKeyPath(allID_dict,target_member_id)
-			if len(traverseID_list)==0:
+			if len(traverseID_list)==0:#Do comment at the allID_dict
 				setInDict(allID_dict,IDPathInDict,"No more ID list")
-			else:	
-				#The ID in the traverseID_list will be progressed in the future! Update the list and dictionary
+			else:#The ID in the traverseID_list will be progressed in the future! Update the list and dictionary
 				tmp_dict = dict()
 				tmp_dict = tmp_dict.fromkeys(traverseID_list)		
-				setInDict(allID_dict, IDPathInDict, tmp_dict)#Insert tmp_dict into allID_dict by the path od ID
-				allID_list = allID_list + traverseID_list #Concatenate the list
-			
+				setInDict(allID_dict, IDPathInDict, tmp_dict)#Insert tmp_dict into allID_dict by the ID path
+				traverseID_list = tmp_dict.keys()#Reassign the list order 
+				for index in range(len(allID_list)):
+					if target_member_id == allID_list[index]:
+						currentIDindex = index
+						allID_list[currentIDindex +1:1]=traverseID_list #Insert traverseID_list into allID_list 
+						break
 
-
-			#Get the next ID from target member ID
-			if count >= 0 : #Can call the API
-				if isinstance(getFromDict(allID_list, IDPathInDict),dict):
-					#Get the first element in the dictionary
-					findRecursively( getFromDict(allID_list, IDPathInDict).keys()[0] , afterProgressID_list , allID_list , allID_dict , count)
-				else:
-					print "here"
-					#Get the next element in the dictionary
-					
-			else : #Can't call the API ,Print (1)allID_list (2)allID_dict (3)afterProgressID_list
-				print "At the End of the program, All ID list = %d / after process ID list = %d" % (len(allID_list),len(afterProgressID_list))
-				fw = open('allID_dict.txt','w')
-				printDictToFile(allID_dict,0,fw)
-				fw.close()
 		except (ValueError, KeyError, TypeError) as error:
-			print "At the Inter Exception , member id = ",target_member_id
-			print "Error : ",error
+			print "***At the Inter Exception , member id = ",target_member_id
+			print "***Error : ",error
 	except Exception as error:
-		print "At the Outer Exception , member id = ",target_member_id
-		print "Error :",error
-	return allID_list
+		print "***At the Outer Exception , member id = ",target_member_id
+		print "***Error :",error
+		IDPathInDict = findKeyPath(allID_dict,target_member_id)
+		setInDict(allID_dict,IDPathInDict,error)
+	
+	#Get the next ID from target member ID
+	if count >= 0 : #Can call the API
+		#print "[TEST CODE]ID Path = ",IDPathInDict
+		#Get the next element in the dictionary
+		findRecursively( getNextID(target_member_id,allID_list) , afterProgressID_list , allID_list , allID_dict , count)
+	else : #Can't call the API ,Print (1)allID_list (2)allID_dict (3)afterProgressID_list
+		print "At the End of the program, All ID list = %d / after process ID list = %d" % (len(allID_list),len(afterProgressID_list))
+		#Write to file 1 = allID_dict.txt
+		fw = open(path+'allID_dict.txt','w')
+		printDictToFile(allID_dict, 0, fw)
+		fw.close()
+		#Write to file 2 = allID_list.txt
+		fw2 = open(path+'allID_list.txt','w')
+		for item in allID_list:
+			fw2.write("%s\n" % item)
+		fw2.close()
+		#Write to file 3 = afterProgressID_list.txt
+		fw3 = open(path+'afterProgressID_list.txt','w')
+		for item in afterProgressID_list:
+			fw3.write("%s\n" % item)
+		fw3.close()
 
-print "In the first of program"
+
 #Start from my own profile
 writeFile(member_id, str(application.get_profile(selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer','connections','picture-url','picture-urls','positions','educations','member-url-resources','api-standard-profile-request','site-standard-profile-request','person-activities','recommendations-given','recommendations-received','network','twitter-accounts','im-accounts','phone-numbers','date-of-birth','main-address','location','industry','industry-id','distance','num-recommenders','current-status-timestamp','last-modified-timestamp','num-connections','summary','specialties','proposal-comments','interests','associations','honors','publications','patents','languages','skills','certifications','honors-awards','test-scores','volunteer','organizations-memberships','courses','projects','api-public-profile-request','site-public-profile-request','public-profile-url','three-current-positions','three-past-positions','bound-account-types','suggestions','primary-twitter-account','mfeed-rss-url','following','group-memberships','job-bookmarks'])))
 file_content = readFile(member_id)
@@ -174,14 +190,12 @@ jsonDict = ast.literal_eval(file_content)
 
 traverseID_list = traverseDictGetAllID(jsonDict,traverseID_list)
 traverseID_list = removeRedundantID(traverseID_list,allID_list)#Remove the IDs which have already been progressed
-print "[TEST Code]The return value = ",traverseID_list
 
 #The ID in the traverseID_list will be progressed in the future! Update the list and dictionary
 tmp_dict = dict()
-tmp_dict = tmp_dict.fromkeys(traverseID_list)		
+tmp_dict = tmp_dict.fromkeys(traverseID_list)
 allID_dict[member_id]=tmp_dict
+traverseID_list = tmp_dict.keys()#Reassign the list order 
 allID_list = allID_list + traverseID_list #Concatenate the list
-print "------------------------------- allID_dict --------------------------------"
-printDict(allID_dict,0)
-#findRecursively( allID_dict[member_id].keys()[0] , afterProgressID_list , allID_list , allID_dict , 0)
+findRecursively( allID_dict[member_id].keys()[0] , afterProgressID_list , allID_list , allID_dict , 5)
 	
