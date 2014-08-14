@@ -3,10 +3,14 @@ from linkedin import linkedin
 import os
 import json
 import ast
+try:
+	import cPickle as pickle  
+except:
+	import pickle
 
 #Johnny Chan
-application = linkedin.LinkedInApplication(token="AQVlc_gHTXwZVasIJRIgLG6hWefpOkG0HPVW8K7G2pqzyal4uEPGP4UF_7R8VPQVTPRiFw5XAO2NfcL3_UkzAn7Wfn1ybsK9Hh5FQ5YZP0nwww3mt_ew00b8pmvpHYrUOoHxiWqaUWG_KYlfdOThtHebQK_qtNrQEKNLKqAurObQwl4qrHE")
-member_id='yp7a3L09d2'#Johnny Chan
+#application = linkedin.LinkedInApplication(token="AQVlc_gHTXwZVasIJRIgLG6hWefpOkG0HPVW8K7G2pqzyal4uEPGP4UF_7R8VPQVTPRiFw5XAO2NfcL3_UkzAn7Wfn1ybsK9Hh5FQ5YZP0nwww3mt_ew00b8pmvpHYrUOoHxiWqaUWG_KYlfdOThtHebQK_qtNrQEKNLKqAurObQwl4qrHE")
+#member_id='yp7a3L09d2'#Johnny Chan
 #member_id='snwLFsJSK1'
 #member_id='tJ0koKfP1L'
 
@@ -16,8 +20,13 @@ member_id='yp7a3L09d2'#Johnny Chan
 #member_id='mZY4xXt8EZ'
 #member_id='dJgVi_-eG6'
 
+#Alice Torres
+application = linkedin.LinkedInApplication(token="AQXbmnjFvuG_VwENXDDu1k6BOFcGIAkKU3QY37RjDQkoZKqTK6iC_aq7yp7bJ376wq9fDoUrGr5BsQxcIPGnNbq-0RoHlJ1tjszmNdk4kfyBTxWH45uDMxe3-I7wnTJWEo0yySLk0jWk0y3AaC-lotkpX2vTPs7dw8dupSZNBvS9lJAisN4")
+member_id='OhlpevQzbi'#Alice Torres
+
 #Path to store the files
-path="/home/johnny/Documents/linkedin/johnny/"
+IDPath="/home/johnny/Documents/linkedin/Alice/"
+recordPath="/home/johnny/Documents/linkedin/Alice/recordfiles/"
 #Global Three Main Variable
 allID_list = [member_id]
 afterProgressID_list = [member_id]
@@ -27,21 +36,21 @@ traverseID_list = []
 
 #Function Definition
 def writeFileWithCheck(member_id,content):
-	if os.path.isfile(path+member_id+'.txt'):
+	if os.path.isfile(IDPath+member_id+'.txt'):
 		print("Already have the file")
 	else:
-		f=open(path+member_id+'.txt','w')
+		f=open(IDPath+member_id+'.txt','w')
 		f.write(content)
 		f.close()
 
 def writeFile(member_id,content):
-	fw = open(path+member_id+'.txt','w')
+	fw = open(IDPath+member_id+'.txt','w')
 	fw.write(content)
 	fw.close()
 	return
 
 def readFile(member_id):
-	fr = open(path+member_id+'.txt', 'r')
+	fr = open(IDPath+member_id+'.txt', 'r')
 	tmpStr = fr.read()
 	fr.close()
 	return tmpStr
@@ -95,7 +104,7 @@ def removeRedundantID(traverseID_list,allID_list):
 		traverseID_list.remove(tmp_list[index])
 	return traverseID_list
 
-#Return the path(type = list) of specific "key" from the dictionary 
+#Return the Path(type = list) of specific "key" from the dictionary 
 def findKeyPath(d,key):
 	for k,v in d.items():
 		if isinstance(v,dict):
@@ -158,44 +167,69 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , allI
 		print "***At the Outer Exception , member id = ",target_member_id
 		print "***Error :",error
 		IDPathInDict = findKeyPath(allID_dict,target_member_id)
-		setInDict(allID_dict,IDPathInDict,error)
+		setInDict(allID_dict,IDPathInDict,str(error))
 	
 	#Get the next ID from target member ID
-	if count >= 0 : #Can call the API
-		#print "[TEST CODE]ID Path = ",IDPathInDict
+	if count >= 1 and len(afterProgressID_list)<len(allID_list): #Can call the API
 		#Get the next element in the dictionary
 		findRecursively( getNextID(target_member_id,allID_list) , afterProgressID_list , allID_list , allID_dict , count)
 	else : #Can't call the API ,Print (1)allID_list (2)allID_dict (3)afterProgressID_list
-		print "At the End of the program, All ID list = %d / after process ID list = %d" % (len(allID_list),len(afterProgressID_list))
+		print "------------------------------The End-----------------------------------"
+		print "[TEST CODE]All ID list = %d /  After process ID list = %d " % (len(allID_list),len(afterProgressID_list))
 		#Write to file 1 = allID_dict.txt
-		fw = open(path+'allID_dict.txt','w')
+		fw = open(recordPath+'allID_dict.txt','w')
 		printDictToFile(allID_dict, 0, fw)
 		fw.close()
+		# write to file with json encoding  
+		fwjson=open(recordPath+'allID_dictJson.txt','w')  
+		newData = json.dumps(allID_dict, sort_keys=True, indent=4)  
+		fwjson.write(newData)
+		fwjson.close()
 		#Write to file 2 = allID_list.txt
-		fw2 = open(path+'allID_list.txt','w')
-		for item in allID_list:
-			fw2.write("%s\n" % item)
+		with open(recordPath+'allID_list.txt','w') as fw2:
+			for s in allID_list:
+				fw2.write(s + '\n')
 		fw2.close()
 		#Write to file 3 = afterProgressID_list.txt
-		fw3 = open(path+'afterProgressID_list.txt','w')
-		for item in afterProgressID_list:
-			fw3.write("%s\n" % item)
+		with open(recordPath+'afterProgressID_list.txt', 'w') as fw3:
+			for s in afterProgressID_list:
+				fw3.write(s + '\n')
 		fw3.close()
+		#Write to file 4 = information.txt
+		fwinf = open(recordPath+'information.txt','w')
+		fwinf.write("All ID list = %d\nAfter process ID list = %d\n" % (len(allID_list),len(afterProgressID_list)))
+		fwinf.close()
 
+if os.path.isfile(recordPath+'allID_list.txt'):#Already have the file , read the files and do it continues...
+	#Read file 1 = allID_dict.txt
+	fr1 = open(recordPath+'allID_dictJson.txt','r')
+	allID_dict = json.loads(fr1.read())  
+	fr1.close()	
+	#Read file 2 = allID_list.txt
+	with open(recordPath+'allID_list.txt', 'r') as fr2:
+		allID_list = [line.rstrip('\n') for line in fr2]
+	fr2.close()
+	#Read file 3 = afterProgressID_list.txt
+	with open(recordPath+'afterProgressID_list.txt', 'r') as fr3:
+		afterProgressID_list = [line.rstrip('\n') for line in fr3]
+	fr2.close()
+	print "[TEST CODE]All ID list = %d /  After process ID list = %d " % (len(allID_list),len(afterProgressID_list))
+	print "--------------------------------START------------------------------------"
+	findRecursively( getNextID(afterProgressID_list[-1],allID_list) , afterProgressID_list , allID_list , allID_dict , 200)
+else:#Don' have the record file 
+	os.makedirs(recordPath)#Create the dictionary of the record file
+	#Start from my own profile
+	writeFile(member_id, str(application.get_profile(selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer','connections','picture-url','picture-urls','positions','educations','member-url-resources','api-standard-profile-request','site-standard-profile-request','person-activities','recommendations-given','recommendations-received','network','twitter-accounts','im-accounts','phone-numbers','date-of-birth','main-address','location','industry','industry-id','distance','num-recommenders','current-status-timestamp','last-modified-timestamp','num-connections','summary','specialties','proposal-comments','interests','associations','honors','publications','patents','languages','skills','certifications','honors-awards','test-scores','volunteer','organizations-memberships','courses','projects','api-public-profile-request','site-public-profile-request','public-profile-url','three-current-positions','three-past-positions','bound-account-types','suggestions','primary-twitter-account','mfeed-rss-url','following','group-memberships','job-bookmarks'])))
+	file_content = readFile(member_id)
+	jsonDict = ast.literal_eval(file_content)
+	traverseID_list = traverseDictGetAllID(jsonDict,traverseID_list)
+	traverseID_list = removeRedundantID(traverseID_list,allID_list)#Remove the IDs which have already been progressed
 
-#Start from my own profile
-writeFile(member_id, str(application.get_profile(selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer','connections','picture-url','picture-urls','positions','educations','member-url-resources','api-standard-profile-request','site-standard-profile-request','person-activities','recommendations-given','recommendations-received','network','twitter-accounts','im-accounts','phone-numbers','date-of-birth','main-address','location','industry','industry-id','distance','num-recommenders','current-status-timestamp','last-modified-timestamp','num-connections','summary','specialties','proposal-comments','interests','associations','honors','publications','patents','languages','skills','certifications','honors-awards','test-scores','volunteer','organizations-memberships','courses','projects','api-public-profile-request','site-public-profile-request','public-profile-url','three-current-positions','three-past-positions','bound-account-types','suggestions','primary-twitter-account','mfeed-rss-url','following','group-memberships','job-bookmarks'])))
-file_content = readFile(member_id)
-jsonDict = ast.literal_eval(file_content)
+	#The ID in the traverseID_list will be progressed in the future! Update the list and dictionary
+	tmp_dict = dict()
+	tmp_dict = tmp_dict.fromkeys(traverseID_list)
+	allID_dict[member_id]=tmp_dict
+	traverseID_list = tmp_dict.keys()#Reassign the list order 
+	allID_list = allID_list + traverseID_list #Concatenate the list
+	findRecursively( allID_dict[member_id].keys()[0] , afterProgressID_list , allID_list , allID_dict , 5)
 
-traverseID_list = traverseDictGetAllID(jsonDict,traverseID_list)
-traverseID_list = removeRedundantID(traverseID_list,allID_list)#Remove the IDs which have already been progressed
-
-#The ID in the traverseID_list will be progressed in the future! Update the list and dictionary
-tmp_dict = dict()
-tmp_dict = tmp_dict.fromkeys(traverseID_list)
-allID_dict[member_id]=tmp_dict
-traverseID_list = tmp_dict.keys()#Reassign the list order 
-allID_list = allID_list + traverseID_list #Concatenate the list
-findRecursively( allID_dict[member_id].keys()[0] , afterProgressID_list , allID_list , allID_dict , 5)
-	
