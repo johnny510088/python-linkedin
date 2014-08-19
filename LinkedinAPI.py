@@ -30,7 +30,6 @@ recordPath="/home/johnny/Documents/linkedin/Alice/recordfiles/"
 #Global Three Main Variable
 allID_list = [member_id]
 afterProgressID_list = [member_id]
-allID_dict = dict()
 #Tmp Variable
 traverseID_list = []
 
@@ -130,7 +129,7 @@ def getNextID(target_member_id,allID_list):
 			return allID_list[index+1]
 
 #Main Recursively function
-def findRecursively( target_member_id , afterProgressID_list , allID_list , allID_dict , count):
+def findRecursively( target_member_id , afterProgressID_list , allID_list , count):
 	print "[TEST CODE]In findRecursively funx , target_member_id = %s ,count = %d " % (target_member_id,count)
 	count = count -1
 	afterProgressID_list.append(target_member_id)# Add "target member id" in orders
@@ -146,14 +145,7 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , allI
 			traverseID_list = traverseDictGetAllID(jsonDict,traverseID_list)#Get "New ID list" from the current "target member ID"
 			traverseID_list = removeRedundantID(traverseID_list,allID_list)#Remove the IDs which have already been progressed
 			
-			IDPathInDict = findKeyPath(allID_dict,target_member_id)
-			if len(traverseID_list)==0:#Do comment at the allID_dict
-				setInDict(allID_dict,IDPathInDict,"No more ID list")
-			else:#The ID in the traverseID_list will be progressed in the future! Update the list and dictionary
-				tmp_dict = dict()
-				tmp_dict = tmp_dict.fromkeys(traverseID_list)		
-				setInDict(allID_dict, IDPathInDict, tmp_dict)#Insert tmp_dict into allID_dict by the ID path
-				traverseID_list = tmp_dict.keys()#Reassign the list order 
+			if len(traverseID_list)!=0:
 				for index in range(len(allID_list)):
 					if target_member_id == allID_list[index]:
 						currentIDindex = index
@@ -166,25 +158,14 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , allI
 	except Exception as error:
 		print "***At the Outer Exception , member id = ",target_member_id
 		print "***Error :",error
-		IDPathInDict = findKeyPath(allID_dict,target_member_id)
-		setInDict(allID_dict,IDPathInDict,str(error))
 	
 	#Get the next ID from target member ID
 	if count >= 1 and len(afterProgressID_list)<len(allID_list): #Can call the API
 		#Get the next element in the dictionary
-		findRecursively( getNextID(target_member_id,allID_list) , afterProgressID_list , allID_list , allID_dict , count)
-	else : #Can't call the API ,Print (1)allID_list (2)allID_dict (3)afterProgressID_list
+		findRecursively( getNextID(target_member_id,allID_list) , afterProgressID_list , allID_list , count)
+	else : #Can't call the API ,Print (1)allID_list (2)afterProgressID_list
 		print "------------------------------The End-----------------------------------"
 		print "[TEST CODE]All ID list = %d /  After process ID list = %d " % (len(allID_list),len(afterProgressID_list))
-		#Write to file 1 = allID_dict.txt
-		fw = open(recordPath+'allID_dict.txt','w')
-		printDictToFile(allID_dict, 0, fw)
-		fw.close()
-		# write to file with json encoding  
-		fwjson=open(recordPath+'allID_dictJson.txt','w')  
-		newData = json.dumps(allID_dict, sort_keys=True, indent=4)  
-		fwjson.write(newData)
-		fwjson.close()
 		#Write to file 2 = allID_list.txt
 		with open(recordPath+'allID_list.txt','w') as fw2:
 			for s in allID_list:
@@ -201,10 +182,6 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , allI
 		fwinf.close()
 
 if os.path.isfile(recordPath+'allID_list.txt'):#Already have the file , read the files and do it continues...
-	#Read file 1 = allID_dict.txt
-	fr1 = open(recordPath+'allID_dictJson.txt','r')
-	allID_dict = json.loads(fr1.read())  
-	fr1.close()	
 	#Read file 2 = allID_list.txt
 	with open(recordPath+'allID_list.txt', 'r') as fr2:
 		allID_list = [line.rstrip('\n') for line in fr2]
@@ -215,7 +192,7 @@ if os.path.isfile(recordPath+'allID_list.txt'):#Already have the file , read the
 	fr2.close()
 	print "[TEST CODE]All ID list = %d /  After process ID list = %d " % (len(allID_list),len(afterProgressID_list))
 	print "--------------------------------START------------------------------------"
-	findRecursively( getNextID(afterProgressID_list[-1],allID_list) , afterProgressID_list , allID_list , allID_dict , 200)
+	findRecursively( getNextID(afterProgressID_list[-1],allID_list) , afterProgressID_list , allID_list , 10)
 else:#Don' have the record file 
 	os.makedirs(recordPath)#Create the dictionary of the record file
 	#Start from my own profile
@@ -226,10 +203,5 @@ else:#Don' have the record file
 	traverseID_list = removeRedundantID(traverseID_list,allID_list)#Remove the IDs which have already been progressed
 
 	#The ID in the traverseID_list will be progressed in the future! Update the list and dictionary
-	tmp_dict = dict()
-	tmp_dict = tmp_dict.fromkeys(traverseID_list)
-	allID_dict[member_id]=tmp_dict
-	traverseID_list = tmp_dict.keys()#Reassign the list order 
 	allID_list = allID_list + traverseID_list #Concatenate the list
-	findRecursively( allID_dict[member_id].keys()[0] , afterProgressID_list , allID_list , allID_dict , 5)
-
+	findRecursively( getNextID(afterProgressID_list[-1],allID_list) , afterProgressID_list , allID_list , 10)
