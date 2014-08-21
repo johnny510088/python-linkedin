@@ -8,6 +8,11 @@ try:
 except:
 	import pickle
 
+import lxml
+import urllib
+from lxml import etree
+import glob
+
 #Johnny Chan
 #application = linkedin.LinkedInApplication(token="AQVlc_gHTXwZVasIJRIgLG6hWefpOkG0HPVW8K7G2pqzyal4uEPGP4UF_7R8VPQVTPRiFw5XAO2NfcL3_UkzAn7Wfn1ybsK9Hh5FQ5YZP0nwww3mt_ew00b8pmvpHYrUOoHxiWqaUWG_KYlfdOThtHebQK_qtNrQEKNLKqAurObQwl4qrHE")
 #member_id='yp7a3L09d2'#Johnny Chan
@@ -42,8 +47,11 @@ def writeFileWithCheck(member_id,content):
 		f.write(content)
 		f.close()
 
-def writeFile(member_id,content):
-	fw = open(IDPath+member_id+'.txt','w')
+def writeFile(member_id,content,isPublicProfileUrl):
+	if isPublicProfileUrl:
+		fw = open(IDPath+member_id+'_publicProfileUrl.txt','w')
+	else:
+		fw = open(IDPath+member_id+'.txt','w')
 	fw.write(content)
 	fw.close()
 	return
@@ -134,7 +142,7 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , coun
 	count = count -1
 	afterProgressID_list.append(target_member_id)# Add "target member id" in orders
 	try:
-		writeFile(target_member_id, str(application.get_profile(member_id=target_member_id,selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer','connections','picture-url','picture-urls','positions','educations','member-url-resources','api-standard-profile-request','site-standard-profile-request','person-activities','recommendations-given','recommendations-received','network','twitter-accounts','im-accounts','phone-numbers','date-of-birth','main-address','location','industry','industry-id','distance','num-recommenders','current-status-timestamp','last-modified-timestamp','num-connections','summary','specialties','proposal-comments','interests','associations','honors','publications','patents','languages','skills','certifications','honors-awards','test-scores','volunteer','organizations-memberships','courses','projects','api-public-profile-request','site-public-profile-request','public-profile-url','three-current-positions','three-past-positions','bound-account-types','suggestions','primary-twitter-account','mfeed-rss-url','following','group-memberships','job-bookmarks'])))
+		writeFile(target_member_id, str(application.get_profile(member_id=target_member_id,selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer','connections','picture-url','picture-urls','positions','educations','member-url-resources','api-standard-profile-request','site-standard-profile-request','person-activities','recommendations-given','recommendations-received','network','twitter-accounts','im-accounts','phone-numbers','date-of-birth','main-address','location','industry','industry-id','distance','num-recommenders','current-status-timestamp','last-modified-timestamp','num-connections','summary','specialties','proposal-comments','interests','associations','honors','publications','patents','languages','skills','certifications','honors-awards','test-scores','volunteer','organizations-memberships','courses','projects','api-public-profile-request','site-public-profile-request','public-profile-url','three-current-positions','three-past-positions','bound-account-types','suggestions','primary-twitter-account','mfeed-rss-url','following','group-memberships','job-bookmarks'])),False)
 		try:
 			#Read the file and transfer "python object" type into "dictionary" type
 			file_content = readFile(target_member_id)
@@ -145,12 +153,19 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , coun
 			traverseID_list = traverseDictGetAllID(jsonDict,traverseID_list)#Get "New ID list" from the current "target member ID"
 			traverseID_list = removeRedundantID(traverseID_list,allID_list)#Remove the IDs which have already been progressed
 			
-			if len(traverseID_list)!=0:
+			if len(traverseID_list)!=0:#Get the new ID and insert into allID_list
 				for index in range(len(allID_list)):
 					if target_member_id == allID_list[index]:
 						currentIDindex = index
 						allID_list[currentIDindex +1:1]=traverseID_list #Insert traverseID_list into allID_list 
 						break
+			
+			if 'publicProfileUrl' in jsonDict:#Get the publicProfileUrl and store into file 
+				publicProfileUrl = jsonDict['publicProfileUrl']
+				f = urllib.urlopen(publicProfileUrl)
+				ppUrlContent = f.read()
+				writeFile(target_member_id,ppUrlContent,True)
+
 
 		except (ValueError, KeyError, TypeError) as error:
 			print "***At the Inter Exception , member id = ",target_member_id
@@ -192,11 +207,11 @@ if os.path.isfile(recordPath+'allID_list.txt'):#Already have the file , read the
 	fr2.close()
 	print "[TEST CODE]All ID list = %d /  After process ID list = %d " % (len(allID_list),len(afterProgressID_list))
 	print "--------------------------------START------------------------------------"
-	findRecursively( getNextID(afterProgressID_list[-1],allID_list) , afterProgressID_list , allID_list , 10)
+	findRecursively( getNextID(afterProgressID_list[-1],allID_list) , afterProgressID_list , allID_list , 500)
 else:#Don' have the record file 
 	os.makedirs(recordPath)#Create the dictionary of the record file
 	#Start from my own profile
-	writeFile(member_id, str(application.get_profile(selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer','connections','picture-url','picture-urls','positions','educations','member-url-resources','api-standard-profile-request','site-standard-profile-request','person-activities','recommendations-given','recommendations-received','network','twitter-accounts','im-accounts','phone-numbers','date-of-birth','main-address','location','industry','industry-id','distance','num-recommenders','current-status-timestamp','last-modified-timestamp','num-connections','summary','specialties','proposal-comments','interests','associations','honors','publications','patents','languages','skills','certifications','honors-awards','test-scores','volunteer','organizations-memberships','courses','projects','api-public-profile-request','site-public-profile-request','public-profile-url','three-current-positions','three-past-positions','bound-account-types','suggestions','primary-twitter-account','mfeed-rss-url','following','group-memberships','job-bookmarks'])))
+	writeFile(member_id, str(application.get_profile(selectors=['first-name','last-name','maiden-name','formatted-name','phonetic-first-name','phonetic-last-name','formatted-phonetic-name','headline','current-status','current-share','shares','relation-to-viewer','connections','picture-url','picture-urls','positions','educations','member-url-resources','api-standard-profile-request','site-standard-profile-request','person-activities','recommendations-given','recommendations-received','network','twitter-accounts','im-accounts','phone-numbers','date-of-birth','main-address','location','industry','industry-id','distance','num-recommenders','current-status-timestamp','last-modified-timestamp','num-connections','summary','specialties','proposal-comments','interests','associations','honors','publications','patents','languages','skills','certifications','honors-awards','test-scores','volunteer','organizations-memberships','courses','projects','api-public-profile-request','site-public-profile-request','public-profile-url','three-current-positions','three-past-positions','bound-account-types','suggestions','primary-twitter-account','mfeed-rss-url','following','group-memberships','job-bookmarks'])),False)
 	file_content = readFile(member_id)
 	jsonDict = ast.literal_eval(file_content)
 	traverseID_list = traverseDictGetAllID(jsonDict,traverseID_list)
@@ -204,4 +219,11 @@ else:#Don' have the record file
 
 	#The ID in the traverseID_list will be progressed in the future! Update the list and dictionary
 	allID_list = allID_list + traverseID_list #Concatenate the list
-	findRecursively( getNextID(afterProgressID_list[-1],allID_list) , afterProgressID_list , allID_list , 10)
+	
+	#Get the publicProfileUrl and store into file 
+	if 'publicProfileUrl' in jsonDict:
+		publicProfileUrl = jsonDict['publicProfileUrl']
+		f = urllib.urlopen(publicProfileUrl)
+		ppUrlContent = f.read()
+		writeFile(member_id,ppUrlContent,True)
+	findRecursively( getNextID(afterProgressID_list[-1],allID_list) , afterProgressID_list , allID_list , 500)
