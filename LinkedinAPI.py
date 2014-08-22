@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 from linkedin import linkedin
+from lxml import etree
 import os
 import json
 import ast
+import lxml
+import urllib
+import glob
 try:
 	import cPickle as pickle  
 except:
 	import pickle
-
-import lxml
-import urllib
-from lxml import etree
-import glob
 
 #Johnny Chan
 #application = linkedin.LinkedInApplication(token="AQVlc_gHTXwZVasIJRIgLG6hWefpOkG0HPVW8K7G2pqzyal4uEPGP4UF_7R8VPQVTPRiFw5XAO2NfcL3_UkzAn7Wfn1ybsK9Hh5FQ5YZP0nwww3mt_ew00b8pmvpHYrUOoHxiWqaUWG_KYlfdOThtHebQK_qtNrQEKNLKqAurObQwl4qrHE")
@@ -54,22 +53,6 @@ def readFile(member_id):
 	fr.close()
 	return tmpStr
 
-def printDict(d, indent):
-	for key, value in d.iteritems():
-		print '\t' * indent + str(key)
-		if isinstance(value, dict):
-			printDict(value, indent+1)
-		else:
-			print '\t' * (indent+1) + str(value)
-
-def printDictToFile(d, indent,f):
-	for key, value in d.iteritems():
-		f.write('\t' * indent + str(key)+'\n')
-		if isinstance(value, dict):
-			printDictToFile(value, indent+1,f)
-		else:
-			f.write( '\t' * (indent+1) + str(value)+'\n')
-
 #Traverse the whole Dictionary and get the value's whose key is equal to "id"
 def traverseDictGetAllID(d,traverseID_list):
 	for k, v in d.iteritems():
@@ -102,25 +85,6 @@ def removeRedundantID(traverseID_list,allID_list):
 	for	index in range(len(tmp_list)):
 		traverseID_list.remove(tmp_list[index])
 	return traverseID_list
-
-#Return the Path(type = list) of specific "key" from the dictionary 
-def findKeyPath(d,key):
-	for k,v in d.items():
-		if isinstance(v,dict):
-			p = findKeyPath(v,key)
-			if p:
-				return [k] + p
-		else:
-			if k == key:
-				return [k]
-
-#Set the Value in the Dictionary by mapList
-def setInDict(dataDict, mapList, value):
-	getFromDict(dataDict, mapList[:-1])[mapList[-1]] = value
-
-#Get the Value in the Dictionary by mapList 
-def getFromDict(dataDict, mapList):
-	return reduce(lambda d, k: d[k], mapList, dataDict)
 
 #Search the specefic ID in allID_list and return the next ID after the current specific ID 
 def getNextID(target_member_id,allID_list):
@@ -158,7 +122,6 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , coun
 				ppUrlContent = f.read()
 				writeFile(target_member_id,ppUrlContent,True)
 
-
 		except (ValueError, KeyError, TypeError) as error:
 			print "***At the Inter Exception , member id = ",target_member_id
 			print "***Error : ",error
@@ -173,29 +136,29 @@ def findRecursively( target_member_id , afterProgressID_list , allID_list , coun
 	else : #Can't call the API ,Print (1)allID_list (2)afterProgressID_list
 		print "------------------------------The End-----------------------------------"
 		print "[TEST CODE]All ID list = %d /  After process ID list = %d " % (len(allID_list),len(afterProgressID_list))
-		#Write to file 2 = allID_list.txt
-		with open(recordPath+'allID_list.txt','w') as fw2:
+		#Write to file 1 = allID_list.txt
+		with open(recordPath+'allID_list.txt','w') as fw1:
 			for s in allID_list:
+				fw1.write(s + '\n')
+		fw1.close()
+		#Write to file 2 = afterProgressID_list.txt
+		with open(recordPath+'afterProgressID_list.txt', 'w') as fw2:
+			for s in afterProgressID_list:
 				fw2.write(s + '\n')
 		fw2.close()
-		#Write to file 3 = afterProgressID_list.txt
-		with open(recordPath+'afterProgressID_list.txt', 'w') as fw3:
-			for s in afterProgressID_list:
-				fw3.write(s + '\n')
-		fw3.close()
-		#Write to file 4 = information.txt
+		#Write to file 3 = information.txt
 		fwinf = open(recordPath+'information.txt','w')
 		fwinf.write("All ID list = %d\nAfter process ID list = %d\n" % (len(allID_list),len(afterProgressID_list)))
 		fwinf.close()
 
 if os.path.isfile(recordPath+'allID_list.txt'):#Already have the file , read the files and do it continues...
-	#Read file 2 = allID_list.txt
-	with open(recordPath+'allID_list.txt', 'r') as fr2:
-		allID_list = [line.rstrip('\n') for line in fr2]
-	fr2.close()
-	#Read file 3 = afterProgressID_list.txt
-	with open(recordPath+'afterProgressID_list.txt', 'r') as fr3:
-		afterProgressID_list = [line.rstrip('\n') for line in fr3]
+	#Read file 1 = allID_list.txt
+	with open(recordPath+'allID_list.txt', 'r') as fr1:
+		allID_list = [line.rstrip('\n') for line in fr1]
+	fr1.close()
+	#Read file 2 = afterProgressID_list.txt
+	with open(recordPath+'afterProgressID_list.txt', 'r') as fr2:
+		afterProgressID_list = [line.rstrip('\n') for line in fr2]
 	fr2.close()
 	print "[TEST CODE]All ID list = %d /  After process ID list = %d " % (len(allID_list),len(afterProgressID_list))
 	print "--------------------------------START------------------------------------"
