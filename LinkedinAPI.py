@@ -39,14 +39,6 @@ afterProgressID_list = [member_id]
 traverseID_list = []
 
 #Function Definition
-def writeFileWithCheck(member_id,content):
-	if os.path.isfile(IDPath+member_id+'.txt'):
-		print("Already have the file")
-	else:
-		f=open(IDPath+member_id+'.txt','w')
-		f.write(content)
-		f.close()
-
 def writeFile(member_id,content,isPublicProfileUrl):
 	if isPublicProfileUrl:
 		fw = open(IDPath+member_id+'_publicProfileUrl.txt','w')
