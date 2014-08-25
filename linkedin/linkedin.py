@@ -152,7 +152,7 @@ class LinkedInApplication(object):
         if params is None:
             params = {}
         kw = dict(data=data, params=params,
-				headers=headers, timeout=timeout,verify=False)
+				headers=headers, timeout=timeout)
 
         if isinstance(self.authentication, LinkedInDeveloperAuthentication):
             # Let requests_oauthlib.OAuth1 do *all* of the work here
